@@ -1,0 +1,77 @@
+#!/bin/bash
+
+runSuite(){
+	if [ ${#} -ne 2 ] ; then 
+		>&2 echo "Error: ${#} argument(s) instead of 2"
+		exit 2
+	fi
+	for stem in `cat ${1}` ; do
+		file=${stem}.args
+		file_out=${stem}.out
+		fileOutput=$(mktemp /tmp/abc.XXXXXX)
+		if [ ! -e ${file_out} ]  ; then
+			>&2 echo "Error: ${file_out} file is missing"
+			exit 4
+		fi
+		if [ ! -r ${file_out} ] ; then
+			>&2 echo "Error: ${file_out} file is unreadable"
+			exit 4
+		fi
+		if [ -e ${file} ] ; then
+			if [ -e ${stem}.in ] ; then
+				${2} `cat ${file}` < ${stem}.in 1> ${fileOutput}
+				if [ ! "`cmp ${fileOuput} ${file_out}`" = "" ] ; then
+					echo "Test faile: ${stem}"
+					echo "Args:"
+					cat "${file}"
+					echo "Input:"
+					cat "${stem}.in"
+					echo "Expected:"
+					cat $file_out
+					echo "Actual:"
+					cat "$fileOutput"
+				fi
+			else
+				${2} `cat ${file}` 1> ${fileOutput}
+				if [ ! "`cmp ${fileOutput} ${file_out}`" = "" ] ; then
+					echo "Test failed: ${stem}"
+					echo "Args:"
+					cat "${file}"
+					echo "Input:"
+					echo "Expected:"
+					cat ${file_out}
+					echo "Actual:"
+					cat ${fileOutput}
+				fi
+			fi
+		else
+			if [ -e $stem.in ] ; then
+				${2} < ${stem}.in 1> $fileOutput
+				if [ ! "`cmp ${fileOutput} ${file_out}`" = "" ] ; then
+					echo "Test failed: $stem"
+					echo "Args:"
+					echo "Input:"
+					cat $stem.in
+					echo "Expected:"
+					cat $file_out
+					echo "Actual:"
+					cat $fileOutput
+				fi
+			else 
+				${2} 1> ${fileOutput}
+				if [ ! "`cmp ${fileOutput} ${file_out}`" = "" ] ; then
+					echo "Test Failed: ${stem}"
+					echo "Args:"
+					echo "Input:"
+					echo "Expected:"
+					cat ${file_out}
+					echo "Actual:"
+					cat ${fileOutput}
+				fi
+			fi
+		fi
+		rm ${fileOutput}
+	done
+	exit 0
+}
+runSuite ${1} ${2}

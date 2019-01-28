@@ -1,0 +1,28 @@
+#!/bin/bash 
+
+produceOutputs(){
+	if [ ${#} -ne 2 ] ; then
+		>&2 echo "Error: ${#} arguments  instead of 2"
+		exit 2 
+	fi
+	for stem in $(cat ${1}) ; do
+		file=${stem}.args
+		output=${stem}.out
+		if [ -e ${file} ] ; then
+			if [ -e $output ] ; then continue ; fi
+			if [ -e ${stem}.in ] ; then
+				${2} $(cat ${file}) < ${stem}.in 1> ${output}
+			else
+				${2} $(cat ${file}) 1> ${output}
+			fi
+		else
+			if [ -e ${stem}.in ] ; then
+				${2} < ${stem}.in 1> ${output}
+			else
+				${2} 1> ${output}
+			fi
+		fi
+	done
+	exit 0				
+}
+produceOutputs ${1} ${2}
